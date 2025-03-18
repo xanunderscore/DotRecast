@@ -28,23 +28,23 @@ using System.Numerics;
 using System.Runtime;
 using System.Runtime.InteropServices;
 using DotRecast.Core;
+using DotRecast.Core.Numerics;
+using DotRecast.Detour;
+using DotRecast.Detour.Extras.Unity.Astar;
+using DotRecast.Detour.Io;
+using DotRecast.Recast.Demo.Draw;
+using DotRecast.Recast.Demo.Messages;
+using DotRecast.Recast.Demo.Tools;
+using DotRecast.Recast.Demo.UI;
+using DotRecast.Recast.Toolset.Builder;
+using DotRecast.Recast.Toolset.Geom;
+using ImGuiNET;
 using Serilog;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ImGui;
 using Silk.NET.Windowing;
-using ImGuiNET;
-using DotRecast.Core.Numerics;
-using DotRecast.Detour;
-using DotRecast.Detour.Extras.Unity.Astar;
-using DotRecast.Detour.Io;
-using DotRecast.Recast.Toolset.Builder;
-using DotRecast.Recast.Demo.Draw;
-using DotRecast.Recast.Demo.Messages;
-using DotRecast.Recast.Toolset.Geom;
-using DotRecast.Recast.Demo.Tools;
-using DotRecast.Recast.Demo.UI;
 using MouseButton = Silk.NET.Input.MouseButton;
 using Window = Silk.NET.Windowing.Window;
 
@@ -635,6 +635,7 @@ public class RecastDemo : IRecastDemoChannel
         dd.Clear();
         dd.ProjectionMatrix(50f, (float)width / (float)height, 1.0f, camr).CopyTo(projectionMatrix);
         dd.ViewMatrix(cameraPos, cameraEulers).CopyTo(modelviewMatrix);
+        settingsView.CameraPos = cameraPos;
 
         dd.Fog(camr * 0.1f, camr * 1.25f);
         renderer.Render(_sample, settingsView.GetDrawMode());
@@ -651,6 +652,8 @@ public class RecastDemo : IRecastDemoChannel
         _mouseOverMenu = ImGui.GetIO().WantCaptureMouse;
 
         _imgui.Render();
+
+        cameraPos = settingsView.CameraPos;
 
         window.SwapBuffers();
     }

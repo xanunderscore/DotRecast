@@ -21,6 +21,7 @@ using System;
 using System.IO;
 using System.Numerics;
 using DotRecast.Core.Collections;
+using DotRecast.Core.Numerics;
 using DotRecast.Recast.Demo.Draw;
 using DotRecast.Recast.Demo.Messages;
 using ImGuiNET;
@@ -44,6 +45,8 @@ public class RcSettingsView : IRcView
 
     public bool RenderAsLeftHanded => _renderAsLeftHanded;
     private bool _renderAsLeftHanded = false;
+
+    public RcVec3f CameraPos = new();
 
     private DemoSample _sample;
     private RcCanvas _canvas;
@@ -75,10 +78,14 @@ public class RcSettingsView : IRcView
 
         ImGui.SetNextWindowPos(new Vector2(_canvas.Size.X - _canvas.Layout.PropertiesMenuWidth - _canvas.Layout.WidthPadding, _canvas.Layout.TopPadding));
         ImGui.SetNextWindowSize(new Vector2(_canvas.Layout.PropertiesMenuWidth, _canvas.Size.Y - _canvas.Layout.BottomPadding));
-        
+
         ImGui.Begin("Properties", ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse);
 
         ImGui.Checkbox("Render As Left-Handed", ref _renderAsLeftHanded);
+
+        ImGui.DragFloat("X", ref CameraPos.X);
+        ImGui.DragFloat("Y", ref CameraPos.Y);
+        ImGui.DragFloat("Z", ref CameraPos.Z);
 
         ImGui.Text("Input Mesh");
         ImGui.Separator();
