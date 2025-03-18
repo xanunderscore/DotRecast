@@ -957,15 +957,14 @@ namespace DotRecast.Detour
                         continue;
                     }
 
-                    // If the node is visited the first time, calculate node position.
                     var neighbourPos = neighbourNode.pos;
-                    var empStatus = neighbourRef == endRef
-                        ? GetEdgeIntersectionPoint(bestNode.pos, bestRef, bestPoly, bestTile,
-                            endPos, neighbourRef, neighbourPoly, neighbourTile,
-                            ref neighbourPos)
-                        : GetEdgeMidPoint(bestRef, bestPoly, bestTile,
-                            neighbourRef, neighbourPoly, neighbourTile,
-                            ref neighbourPos);
+                    if (neighbourNode.flags == 0)
+                    {
+                        GetPortalPoints(bestRef, bestPoly, bestTile, neighbourRef, neighbourPoly, neighbourTile, out var sa, out var sb);
+                        DtUtils.DistancePtSegSqr2D(bestNode.pos, sa, sb, out var t);
+                        t = Math.Clamp(t, 0.1f, 0.9f);
+                        neighbourPos = RcVec3f.Lerp(sa, sb, t);
+                    }
 
                     // Calculate cost and heuristic.
                     float cost = 0;
