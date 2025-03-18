@@ -1067,8 +1067,8 @@ namespace DotRecast.Recast
 
                     if ((cont.verts[v + 3] & RC_BORDER_VERTEX) != 0)
                     {
-                        // upstream code removes this vertex in this case, but that causes creation of very long thin triangles
-                        // vflags[indices[j]] = 1;
+                        // This vertex should be removed.
+                        vflags[indices[j]] = 1;
                     }
                 }
 
