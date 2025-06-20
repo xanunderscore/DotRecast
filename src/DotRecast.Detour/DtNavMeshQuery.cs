@@ -886,9 +886,9 @@ namespace DotRecast.Detour
                         ?*/ GetEdgeIntersectionPoint(bestNode.pos, bestRef, bestPoly, bestTile,
                             endPos, neighbourRef, neighbourPoly, neighbourTile,
                             ref neighbourPos)
-                        /*: GetEdgeMidPoint(bestRef, bestPoly, bestTile,
-                            neighbourRef, neighbourPoly, neighbourTile,
-                            ref neighbourPos)*/;
+                                /*: GetEdgeMidPoint(bestRef, bestPoly, bestTile,
+                                    neighbourRef, neighbourPoly, neighbourTile,
+                                    ref neighbourPos)*/;
 
                     // Calculate cost and heuristic.
                     float cost = 0;
@@ -934,6 +934,16 @@ namespace DotRecast.Detour
                     {
                         // Cost
                         heuristicCost = heuristic.GetCost(neighbourPos, endPos);
+
+                        if (heuristicCost < 0)
+                        {
+                            // if cost is negative, we consider this node to be a shortcut directly to the destination and exit early; DT_PARTIAL_RESULT will be returned
+                            if (heuristicCost < 0)
+                            {
+                                lastBestNode = bestNode;
+                                goto break_outer;
+                            }
+                        }
                     }
 
                     float total = cost + heuristicCost;
@@ -980,6 +990,7 @@ namespace DotRecast.Detour
                 }
             }
 
+        break_outer:
             var status = GetPathToNode(lastBestNode, ref path);
             if (lastBestNode.id != endRef)
             {
