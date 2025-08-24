@@ -89,6 +89,8 @@ namespace DotRecast.Detour
         private readonly LinkedList<DtMeshTile> availableTiles = new LinkedList<DtMeshTile>();
         private readonly DtMeshTile[] m_tiles;
 
+        public DtOffMeshConnection[] OffMeshConnections;
+
         /// < List of tiles.
         /** The maximum number of vertices per navigation polygon. */
         private readonly int m_maxVertPerPoly;
@@ -904,6 +906,45 @@ namespace DotRecast.Detour
                     link.next = tile.polyLinks[landPoly.index];
                     tile.polyLinks[landPoly.index] = tidx;
                 }
+            }
+        }
+
+        public void ConnectCrossTileLinks()
+        {
+            return; // real off-mesh connections have new polygons created especially for them
+            foreach (var conn in OffMeshConnections)
+            {
+                var startPos = conn.pos[0];
+                var endPos = conn.pos[1];
+                CalcTileLoc(startPos, out var startX, out var startY);
+                CalcTileLoc(endPos, out var endX, out var endY);
+                var startTile = GetTileAt(startX, startY, 0);
+                var endTile = GetTileAt(endX, endY, 0);
+
+                var ext = new RcVec3f()
+                {
+                    X = conn.rad,
+                    Y = startTile.data.header.walkableClimb,
+                    Z = conn.rad
+                };
+
+                var startPoly = FindNearestPolyInTile(startTile, startPos, ext, out var nearestPtStart);
+                if (startPoly == 0)
+                    continue;
+
+                var endPoly = FindNearestPolyInTile(endTile, endPos, ext, out var nearestPtEnd);
+                if (endPoly == 0)
+                    continue;
+
+                int idx = AllocLink(startTile);
+                DtLink link = startTile.links[idx];
+                link.refs = endPoly;
+                link.edge = 2;
+                link.side = 0xff;
+                link.bmin = link.bmax = 0;
+                var startPolyIx = DecodePolyIdPoly(startPoly);
+                link.next = startTile.polyLinks[startPolyIx];
+                startTile.polyLinks[startPolyIx] = idx;
             }
         }
 
