@@ -231,7 +231,7 @@ namespace DotRecast.Detour
             return (int)(refs & polyMask);
         }
 
-        private int AllocLink(DtMeshTile tile)
+        public int AllocLink(DtMeshTile tile)
         {
             if (tile.linksFreeList == DT_NULL_LINK)
             {
