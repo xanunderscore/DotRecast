@@ -204,7 +204,7 @@ namespace DotRecast.Detour
         /// @note This function is generally meant for internal use only.
         /// @param[in] ref The polygon reference.
         /// @see #encodePolyId
-        static int DecodePolyIdSalt(long refs)
+        public static int DecodePolyIdSalt(long refs)
         {
             long saltMask = (1L << DT_SALT_BITS) - 1;
             return (int)((refs >> (DT_POLY_BITS + DT_TILE_BITS)) & saltMask);

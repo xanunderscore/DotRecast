@@ -20,6 +20,7 @@ freely, subject to the following restrictions:
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DotRecast.Core;
 using DotRecast.Core.Collections;
 using DotRecast.Core.Numerics;
@@ -37,13 +38,16 @@ namespace DotRecast.Detour
 
         protected DtQueryData m_query;
 
+        private Action<string>? _log = null;
+
         /// < Sliced query state.
-        public DtNavMeshQuery(DtNavMesh nav)
+        public DtNavMeshQuery(DtNavMesh nav, Action<string>? log = null)
         {
             m_nav = nav;
             m_tinyNodePool = new DtNodePool();
             m_nodePool = new DtNodePool();
             m_openList = new DtNodeQueue();
+            _log = log;
         }
 
         /// Returns random location on navmesh.
@@ -854,6 +858,7 @@ namespace DotRecast.Detour
                 for (int i = bestTile.polyLinks[bestPoly.index]; i != DtNavMesh.DT_NULL_LINK; i = bestTile.links[i].next)
                 {
                     long neighbourRef = bestTile.links[i].refs;
+                    _log?.Invoke($"current poly={bestPoly.index:X}, neighbor={neighbourRef:X}");
 
                     // Skip invalid ids and do not expand back to where we came from.
                     if (neighbourRef == 0 || neighbourRef == parentRef)
@@ -886,9 +891,9 @@ namespace DotRecast.Detour
                         ?*/ GetEdgeIntersectionPoint(bestNode.pos, bestRef, bestPoly, bestTile,
                             endPos, neighbourRef, neighbourPoly, neighbourTile,
                             ref neighbourPos)
-                                /*: GetEdgeMidPoint(bestRef, bestPoly, bestTile,
-                                    neighbourRef, neighbourPoly, neighbourTile,
-                                    ref neighbourPos)*/;
+                                    /*: GetEdgeMidPoint(bestRef, bestPoly, bestTile,
+                                        neighbourRef, neighbourPoly, neighbourTile,
+                                        ref neighbourPos)*/;
 
                     // Calculate cost and heuristic.
                     float cost = 0;
@@ -897,12 +902,15 @@ namespace DotRecast.Detour
                     // raycast parent
                     bool foundShortCut = false;
                     List<long> shortcut = null;
-                    if (tryLOS)
+                    if (tryLOS && parentPoly.GetPolyType() != DtPolyTypes.DT_POLYTYPE_OFFMESH_CONNECTION)
                     {
                         var rayStatus = Raycast(parentRef, parentNode.pos, neighbourPos, filter,
                             DtRaycastOptions.DT_RAYCAST_USE_COSTS, ref rayHit, grandpaRef);
                         if (rayStatus.Succeeded())
                         {
+                            _log?.Invoke($"raycast shortcut from {parentRef:X} to {neighbourRef:X} t={rayHit.t:f3}; distance {RcVec3f.DistanceSquared(parentNode.pos, bestNode.pos):f3}; neighbor {neighbourPos}");
+                            var pathStr = string.Join(", ", rayHit.path.Select(p => p.ToString("X")));
+                            _log?.Invoke($"shortcut path: {pathStr}");
                             foundShortCut = rayHit.t >= 1.0f;
                             if (foundShortCut)
                             {
@@ -962,6 +970,7 @@ namespace DotRecast.Detour
 
                     // Add or update the node.
                     neighbourNode.pidx = foundShortCut ? bestNode.pidx : m_nodePool.GetNodeIdx(bestNode);
+                    _log?.Invoke($"updating node {neighbourRef:X} with parent ref {m_nodePool.GetNodeAtIdx(neighbourNode.pidx).id:X}");
                     neighbourNode.id = neighbourRef;
                     neighbourNode.flags = (neighbourNode.flags & ~DtNodeFlags.DT_NODE_CLOSED);
                     neighbourNode.cost = cost;
@@ -2007,10 +2016,19 @@ namespace DotRecast.Detour
             left = RcVec3f.Zero;
             right = RcVec3f.Zero;
 
+            void dbg(string message)
+            {
+                if (fromPoly.GetPolyType() == DtPolyTypes.DT_POLYTYPE_OFFMESH_CONNECTION)
+                    _log?.Invoke(message);
+            }
+
+            // dbg($"portal {from:X} -> {to:X}");
+
             // Find the link that points to the 'to' polygon.
             DtLink link = null;
             for (int i = fromTile.polyLinks[fromPoly.index]; i != DtNavMesh.DT_NULL_LINK; i = fromTile.links[i].next)
             {
+                dbg($"link idx {i} points to {fromTile.links[i].refs:X}");
                 if (fromTile.links[i].refs == to)
                 {
                     link = fromTile.links[i];
@@ -2020,7 +2038,21 @@ namespace DotRecast.Detour
 
             if (link == null)
             {
+                dbg($"no link from {from:X} to {to:X}");
                 return DtStatus.DT_FAILURE | DtStatus.DT_INVALID_PARAM;
+            }
+
+            if (fromPoly.GetPolyType() == DtPolyTypes.DT_POLYTYPE_OFFMESH_CONNECTION && toPoly.GetPolyType() == DtPolyTypes.DT_POLYTYPE_OFFMESH_CONNECTION)
+            {
+                left.X = toTile.data.verts[toPoly.verts[0] * 3];
+                left.Y = toTile.data.verts[toPoly.verts[0] * 3 + 1];
+                left.Z = toTile.data.verts[toPoly.verts[0] * 3 + 2];
+
+                right.X = toTile.data.verts[toPoly.verts[0] * 3];
+                right.Y = toTile.data.verts[toPoly.verts[0] * 3 + 1];
+                right.Z = toTile.data.verts[toPoly.verts[0] * 3 + 2];
+
+                return DtStatus.DT_SUCCESS;
             }
 
             // Handle off-mesh connections.
@@ -2044,6 +2076,7 @@ namespace DotRecast.Detour
                     }
                 }
 
+                dbg("fallback: from offmesh conn");
                 return DtStatus.DT_FAILURE | DtStatus.DT_INVALID_PARAM;
             }
 
@@ -2066,6 +2099,7 @@ namespace DotRecast.Detour
                     }
                 }
 
+                dbg("fallback: to offmesh conn");
                 return DtStatus.DT_FAILURE | DtStatus.DT_INVALID_PARAM;
             }
 
