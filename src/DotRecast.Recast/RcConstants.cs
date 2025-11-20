@@ -26,7 +26,7 @@ namespace DotRecast.Recast
         /// When a data element is given this value it is considered to no longer be 
         /// assigned to a usable area.  (E.g. It is un-walkable.)
         public const int RC_NULL_AREA = 0;
-        
+
         /// The default area id used to indicate a walkable polygon. 
         /// This is also the maximum allowed area id, and the only non-null area id 
         /// recognized by some steps in the build process. 
@@ -35,7 +35,7 @@ namespace DotRecast.Recast
         /// The value returned by #rcGetCon if the specified direction is not connected
         /// to another span. (Has no neighbor.)
         public const int RC_NOT_CONNECTED = 0x3f;
-        
+
         /// Defines the number of bits allocated to rcSpan::smin and rcSpan::smax.
         public const int RC_SPAN_HEIGHT_BITS = 20;
 
@@ -45,7 +45,7 @@ namespace DotRecast.Recast
         /// The number of spans allocated per span spool.
         /// @see rcSpanPool
         public const int RC_SPANS_PER_POOL = 2048;
-        
+
         /// Heighfield border flag.
         /// If a heightfield region ID has this bit set, then the region is a border
         /// region and its spans are considered unwalkable.
