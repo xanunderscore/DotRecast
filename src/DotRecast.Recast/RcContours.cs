@@ -24,8 +24,8 @@ using DotRecast.Core;
 
 namespace DotRecast.Recast
 {
-    using static RcConstants;
     using static RcCommons;
+    using static RcConstants;
 
     public static class RcContours
     {
@@ -333,12 +333,8 @@ namespace DotRecast.Recast
                     cinc = pn - 1;
                     ci = (bi + cinc) % pn;
                     endi = ai;
-                    int temp = ax;
-                    ax = bx;
-                    bx = temp;
-                    temp = az;
-                    az = bz;
-                    bz = temp;
+                    (ax, bx) = (bx, ax);
+                    (az, bz) = (bz, az);
                 }
 
                 // Tessellate only outer edges or edges between areas.
@@ -381,10 +377,12 @@ namespace DotRecast.Recast
                     int ii = (i + 1) % (simplified.Count / 4);
 
                     int ax = simplified[i * 4 + 0];
+                    int ay = simplified[i * 4 + 1];
                     int az = simplified[i * 4 + 2];
                     int ai = simplified[i * 4 + 3];
 
                     int bx = simplified[ii * 4 + 0];
+                    int by = simplified[ii * 4 + 1];
                     int bz = simplified[ii * 4 + 2];
                     int bi = simplified[ii * 4 + 3];
 
@@ -409,8 +407,9 @@ namespace DotRecast.Recast
                     if (tess)
                     {
                         int dx = bx - ax;
+                        int dy = by - ay;
                         int dz = bz - az;
-                        if (dx * dx + dz * dz > maxEdgeLen * maxEdgeLen)
+                        if (dx * dx + dz * dz + dy * dy > maxEdgeLen * maxEdgeLen)
                         {
                             // Round based on the segments in lexilogical order so that the
                             // max tesselation is consistent regardless in which direction
